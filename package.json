@@ -1,0 +1,43 @@
+{
+  "name": "freq-trading",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/server.ts",
+    "server": "tsx src/server.ts",
+    "watch": "tsx watch src/server.ts",
+    "clean": "rm -rf dist",
+    "start-all": "./start-all.sh",
+    "start-all-ts": "tsx start-all.ts",
+    "test-integration": "tsx test-integration.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "@types/node": "^24.2.1",
+    "@types/winston": "^2.4.4",
+    "axios": "^1.11.0",
+    "ccxt": "^4.4.100",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "playwright": "^1.54.2",
+    "prisma": "^6.14.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/ws": "^8.18.1"
+  }
+}

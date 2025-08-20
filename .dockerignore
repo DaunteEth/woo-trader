@@ -1,0 +1,91 @@
+# Dependencies
+node_modules/
+ui-app/node_modules/
+
+# Environment files - NEVER include these in Docker image
+.env
+.env.*
+!.env.example
+env.txt
+ui-app/.env
+ui-app/.env.*
+!ui-app/.env.example
+
+# Build outputs
+dist/
+ui-app/.next/
+ui-app/out/
+ui-app/build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+prisma/dev.db
+ui-app/prisma/dev.db
+ui-app/prisma/migrations/dev/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (exclude to reduce image size)
+docs/
+*.md
+!README.md
+
+# Test files
+__tests__/
+*.test.ts
+*.spec.ts
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+
+# Output files (will be mounted as volume)
+output/*.json
+output/*.csv
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Package manager files
+.npm
+.yarn/
+pnpm-lock.yaml
+yarn.lock
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Next.js specific
+ui-app/.next/
+ui-app/out/
+ui-app/.vercel
+
+# Development files
+*.local
+.env.development
+.env.test

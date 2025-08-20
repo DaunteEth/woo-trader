@@ -1,0 +1,33 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# High-Frequency Trading Bot Cursor Rules
+
+This is a high-frequency crypto trading bot that uses the CCXT MCP server for exchange integration.
+
+## Key Features
+- TypeScript/Node.js based
+- Uses CCXT MCP server for exchange connectivity
+- Implements multiple HFT strategies (scalping, arbitrage, market making, momentum)
+- Real-time market data processing
+- Position and risk management
+- Paper trading and live trading modes
+
+## Architecture
+- src/strategies/ - Trading strategy implementations
+- src/indicators/ - Technical indicators
+- src/managers/ - Position, risk, and order managers
+- src/utils/ - Utilities and configuration
+- src/types/ - TypeScript type definitions
+
+## MCP Integration
+The bot uses the @doggybee/mcp-server-ccxt MCP server for exchange operations.
+
+## Important
+- Always validate inputs and handle errors
+- Implement proper risk management
+- Log all trading activities
+- Test thoroughly in paper mode before live trading

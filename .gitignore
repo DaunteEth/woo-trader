@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+ui-app/.next/
+ui-app/out/
+
+# Environment variables - NEVER commit these
+.env
+.env.*
+!.env.example
+env.txt
+ui-app/.env
+ui-app/.env.*
+!ui-app/.env.example
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+prisma/dev.db
+ui-app/prisma/dev.db
+
+# Output files
+output/*
+!output/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+coverage/
+.nyc_output/
+test-*.js
+test-*.ts
+cookies.txt
+*.csv
+
+# Temporary files
+tmp/
+temp/

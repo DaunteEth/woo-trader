@@ -1,0 +1,212 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  balance   Float    @default(10000) // Master account balance
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  simulations       Simulation[]
+  activeSimulation  Simulation?  @relation("ActiveSimulation", fields: [activeSimulationId], references: [id])
+  activeSimulationId String? @unique
+  settings          UserSettings?
+}
+
+model Simulation {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  balance     Float    @default(10000) // Each simulation starts with 10k
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user              User             @relation(fields: [userId], references: [id])
+  activeForUser     User?            @relation("ActiveSimulation")
+  strategyConfigs   StrategyConfig[]
+  signals           Signal[]
+  trades            Trade[]
+  positions         Position[]
+  performanceStats  PerformanceStats?
+  
+  @@unique([userId, name])
+  @@index([userId, isActive])
+}
+
+model StrategyConfig {
+  id           String   @id @default(cuid())
+  simulationId String
+  name         String   // Scalping, Momentum, Arbitrage
+  enabled      Boolean  @default(true)
+  weight       Float    @default(1.0)
+  
+  // Signal following configuration
+  followOwnSignals       Boolean @default(true)  // Follow signals from this strategy
+  followAISignals        Boolean @default(true)  // Follow AI-enhanced signals
+  aiExecutionEnabled     Boolean @default(false) // Allow AI to execute trades autonomously
+  
+  // Common parameters
+  stopLossPercent    Float?
+  takeProfitPercent  Float?
+  
+  // Scalping parameters
+  emaPeriodFast      Int?
+  emaPeriodSlow      Int?
+  rsiPeriod          Int?
+  rsiOverbought      Int?
+  rsiOversold        Int?
+  bbPeriod           Int?
+  bbStdDev           Float?
+  minSpread          Float?
+  maxSpread          Float?
+  
+  // Momentum parameters
+  vwapEnabled        Boolean   @default(false)
+  bbBreakoutStdDev   Float?
+  momentumPeriod     Int?
+  volumeMultiplier   Float?
+  rsiMomentumThreshold Int?
+  trailingStopPercent Float?
+  
+  // Arbitrage parameters
+  minSpreadPercent   Float?
+  maxSpreadPercent   Float?
+  executionDelay     Int?
+  feePercent         Float?
+  minProfitPercent   Float?
+  
+  // FundingArbitrage parameters
+  minFundingRate     Float?
+  fundingThreshold   Float?
+  hoursBeforeFunding Int?
+  maxPositionHoldTime Int?
+  spotFeePercent     Float?
+  perpFeePercent     Float?
+  
+  // OrderBookArbitrage parameters
+  minImbalance       Float?
+  minVolumeRatio     Float?
+  depthLevels        Int?
+  minSpreadBps       Float?
+  maxSpreadBps       Float?
+  confidenceThreshold Float?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  
+  @@unique([simulationId, name])
+  @@index([simulationId])
+}
+
+model Signal {
+  id            String   @id @default(cuid())
+  simulationId  String
+  timestamp     DateTime @default(now())
+  symbol        String
+  action        String   // buy, sell, hold, close
+  strategy      String
+  strength      Float
+  confidence    Float
+  indicators    String   // JSON string
+  suggestedEntry Float?
+  suggestedSL   Float?
+  suggestedTP   Float?
+  positionSize  Float?
+  executed      Boolean  @default(false)
+  
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  trades     Trade[]
+  
+  @@index([simulationId, timestamp])
+}
+
+model Trade {
+  id           String   @id @default(cuid())
+  simulationId String
+  signalId     String?
+  timestamp    DateTime @default(now())
+  symbol       String
+  type         String   // open, close
+  side         String   // buy, sell
+  price        Float
+  quantity     Float
+  fee          Float    @default(0)
+  pnl          Float?
+  reason       String?
+  status       String   @default("pending") // pending, filled, cancelled
+  
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  signal     Signal?    @relation(fields: [signalId], references: [id])
+  
+  @@index([simulationId, timestamp])
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  simulationId String
+  symbol       String
+  side         String   // long, short
+  entryPrice   Float
+  quantity     Float
+  leverage     Float    @default(1) // Leverage for futures
+  margin       Float?   // Margin used
+  stopLoss     Float?
+  takeProfit   Float?
+  openTime     DateTime @default(now())
+  closeTime    DateTime?
+  closedPnL    Float?
+  unrealizedPnL Float?
+  currentPrice Float?
+  
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  
+  @@index([simulationId, symbol])
+  @@index([simulationId, closeTime])
+}
+
+model PerformanceStats {
+  id              String   @id @default(cuid())
+  simulationId    String   @unique
+  totalTrades     Int      @default(0)
+  winningTrades   Int      @default(0)
+  losingTrades    Int      @default(0)
+  totalPnL        Float    @default(0)
+  winRate         Float    @default(0)
+  sharpeRatio     Float?
+  maxDrawdown     Float?
+  avgWin          Float    @default(0)
+  avgLoss         Float    @default(0)
+  profitFactor    Float?
+  lastUpdated     DateTime @updatedAt
+  
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  defaultToSimulation  Boolean  @default(true)
+  activeSimulationId   String?
+  envVariables         String? // JSON string of environment variables
+  envContent           String? // Raw env file content
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

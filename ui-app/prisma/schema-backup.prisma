@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  balance   Float    @default(10000) // Starting balance
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  strategies StrategyConfig[]
+  signals    Signal[]
+  trades     Trade[]
+  positions  Position[]
+}
+
+model StrategyConfig {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  enabled    Boolean  @default(true)
+  weight     Float    @default(1.0)
+  params     String   // JSON string
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, name])
+}
+
+model Signal {
+  id            String   @id @default(cuid())
+  userId        String
+  timestamp     DateTime @default(now())
+  symbol        String
+  action        String   // buy, sell, hold, close
+  strategy      String
+  strength      Float
+  confidence    Float
+  indicators    String   // JSON string
+  suggestedEntry Float?
+  suggestedSL   Float?
+  suggestedTP   Float?
+  positionSize  Float?
+  executed      Boolean  @default(false)
+  
+  user   User    @relation(fields: [userId], references: [id])
+  trades Trade[]
+}
+
+model Trade {
+  id          String   @id @default(cuid())
+  userId      String
+  signalId    String?
+  timestamp   DateTime @default(now())
+  symbol      String
+  type        String   // open, close
+  side        String   // buy, sell
+  price       Float
+  quantity    Float
+  pnl         Float?
+  reason      String?
+  status      String   @default("pending") // pending, filled, cancelled
+  
+  user   User    @relation(fields: [userId], references: [id])
+  signal Signal? @relation(fields: [signalId], references: [id])
+}
+
+model Position {
+  id         String   @id @default(cuid())
+  userId     String
+  symbol     String
+  side       String   // long, short
+  entryPrice Float
+  quantity   Float
+  leverage   Float    @default(1) // Leverage for futures
+  margin     Float?   // Margin used
+  stopLoss   Float?
+  takeProfit Float?
+  openTime   DateTime @default(now())
+  closeTime  DateTime?
+  closedPnL  Float?
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@index([userId, symbol])
+  @@index([openTime, closeTime])
+}

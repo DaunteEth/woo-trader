@@ -1,0 +1,94 @@
+services:
+  hft-bot:
+    image: ${DOCKER_IMAGE:-daunteeth/woo-hft-bot:latest}
+    container_name: hft-trading-bot
+    restart: unless-stopped
+    ports:
+      - "3005:3005"  # Frontend UI
+      - "3006:3006"  # Backend API
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/woo_trading?schema=public
+      - IS_DOCKER=true
+      # WooX API Configuration
+      - WOOX_API_KEY=${WOOX_API_KEY:-}
+      - WOOX_API_SECRET=${WOOX_API_SECRET:-}
+      - WOOX_APP_ID=${WOOX_APP_ID:-}
+      # Security
+      - JWT_SECRET=${JWT_SECRET:-hft_jwt_secret_2024_secure_key_changeme}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-hft_encryption_key_32chars_changeme}
+      - SESSION_SECRET=${SESSION_SECRET:-hft_session_secret_2024_changeme}
+      # Trading Configuration
+      - TRADING_MODE=${TRADING_MODE:-paper}
+      - EXCHANGE_TESTNET=${EXCHANGE_TESTNET:-true}
+      - TRADING_PAIRS=${TRADING_PAIRS:-PERP_BTC_USDT,PERP_ETH_USDT}
+      - RISK_PER_TRADE=${RISK_PER_TRADE:-0.02}
+      - MAX_POSITIONS=${MAX_POSITIONS:-3}
+      - LEVERAGE=${LEVERAGE:-1}
+      # AI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-openai/gpt-3.5-turbo}
+      - AI_ENABLED=${AI_ENABLED:-true}
+      # WebSocket URLs
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3006}
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./.env:/app/.env:ro
+    networks:
+      - hft-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hft-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=woo_trading
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - hft-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: hft-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - hft-network
+    command: redis-server --appendonly yes
+
+networks:
+  hft-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
